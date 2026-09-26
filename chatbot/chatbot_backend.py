@@ -38,18 +38,18 @@ graph.add_edge(START,"chat")
 graph.add_edge("chat",END)
 workflow=graph.compile(checkpointer=checkpointer)
 
-while True:
-    user_input = input("Enter input: ").strip()
+# while True:
+#     user_input = input("Enter input: ").strip()
 
-    if user_input.lower() in ["exit", "stop"]:
-        print("Exiting chat.")
-        break
+#     if user_input.lower() in ["exit", "stop"]:
+#         print("Exiting chat.")
+#         break
 
-    state = {"message": [HumanMessage(content=user_input)]}
-    result = workflow.invoke(state, config=config)
+#     state = {"message": [HumanMessage(content=user_input)]}
+#     result = workflow.invoke(state, config=config)
 
-    messages = result["message"]
-    if isinstance(messages, list) and messages:
-        print(messages[-1].content)
+#     messages = result["message"]
+#     if isinstance(messages, list) and messages:
+#         print(messages[-1].content)
 
-list(workflow.get_state_history(config))
+# list(workflow.get_state_history(config))
