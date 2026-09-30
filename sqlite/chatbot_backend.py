@@ -41,6 +41,11 @@ graph.add_edge(START,"chat")
 graph.add_edge("chat",END)
 workflow=graph.compile(checkpointer=checkpointer)
 
+def retrieve_all_threads():
+    all_threads=set()
+    for checkpoint in checkpointer.list(None):
+        all_threads.add(checkpoint.config['configurable']['thread_id'])
+    return all_threads
 # while True:
 #     user_input = input("Enter input: ").strip()
 
