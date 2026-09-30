@@ -1,44 +1,61 @@
-import streamlit as st
-from chatbot_backend import workflow
-from langchain_core.messages import HumanMessage
 import uuid
-# st.session_state -> dict -> 
+
+import streamlit as st
+from langchain_core.messages import AIMessage, HumanMessage
+
+from chatbot_backend import workflow
+
 
 def generate_thread_id():
-    return uuid.uuid4()
+    return str(uuid.uuid4())
 
-def reset_chat():
-    thread_id=uuid.uuid4()
-    st.session_state['thread_id']=thread_id
-    add_thread(st.session_state['thread_id'])
-    st.session_state['messages']=[]
 
 def add_thread(thread_id):
-    if 'thread_id' not in st.session_state['chat_threads']:
-        st.session_state['chat_threads'].append(thread_id)
-        
-def load_conversation(thread_id):
-    return workflow.get_state(config={'configurable': {'thread_id': thread_id}}).values['messages']    
+    chat_threads = st.session_state.setdefault('chat_threads', [])
+    if thread_id not in chat_threads:
+        chat_threads.append(thread_id)
 
-if 'message_history' not in st.session_state:
+
+def reset_chat():
+    new_thread_id = generate_thread_id()
+    st.session_state['thread_id'] = new_thread_id
+    add_thread(new_thread_id)
     st.session_state['message_history'] = []
 
-if 'thread_id' not in st.session_state:
-    st.session_state['thread_id']=generate_thread_id()
-    
-if 'chat_threads' not in st.session_state:
-    st.session_state['chat_threads']=[]
 
+def load_conversation(thread_id):
+    state = workflow.get_state(config={'configurable': {'thread_id': thread_id}})
+    messages = state.values.get('message', []) if state and state.values else []
+    history = []
+
+    for msg in messages:
+        if isinstance(msg, HumanMessage):
+            role = 'user'
+        elif isinstance(msg, AIMessage):
+            role = 'assistant'
+        else:
+            continue
+
+        history.append({'role': role, 'content': getattr(msg, 'content', '')})
+
+    return history
+
+
+st.session_state.setdefault('message_history', [])
+st.session_state.setdefault('chat_threads', [])
+st.session_state.setdefault('thread_id', generate_thread_id())
 add_thread(st.session_state['thread_id'])
 
 #--------Sidebar--------#
 st.sidebar.title('LangGraph Chatbot')
 if st.sidebar.button('New Chat'):
     reset_chat()
-st.sidebar.header('My Conversations')
-for thread in st.session_state['chat_threads']:
-    st.sidebar.button(str(thread))
 
+st.sidebar.header('My Conversations')
+for thread in st.session_state['chat_threads'][::-1]:
+    if st.sidebar.button(str(thread)):
+        st.session_state['thread_id'] = thread
+        st.session_state['message_history'] = load_conversation(thread)
 
 # loading the conversation history
 CONFIG = {'configurable': {'thread_id': st.session_state['thread_id']}}
@@ -46,14 +63,9 @@ for message in st.session_state['message_history']:
     with st.chat_message(message['role']):
         st.text(message['content'])
 
-#{'role': 'user', 'content': 'Hi'}
-#{'role': 'assistant', 'content': 'Hi=ello'}
-
 user_input = st.chat_input('Type here')
 
 if user_input:
-
-    # first add the message to message_history
     st.session_state['message_history'].append({'role': 'user', 'content': user_input})
     with st.chat_message('user'):
         st.text(user_input)
@@ -71,5 +83,4 @@ if user_input:
     with st.chat_message('assistant'):
         ai_message = st.write_stream(stream_response())
 
-    # Save the response; it has already been rendered above.
     st.session_state['message_history'].append({'role': 'assistant', 'content': ai_message})
