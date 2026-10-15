@@ -12,18 +12,29 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.graph import add_messages
 from langgraph.checkpoint.sqlite import SqliteSaver
 import sqlite3
+from langchain_groq import ChatGroq
+import os
+
 load_dotenv()  # Load environment variables from .env file
+
+
+
 
 conn=sqlite3.connect(database='chatbot.db',check_same_thread=False)#if true then show error as if true then we can't use this for multiple threads so set it to false
 checkpointer=SqliteSaver(conn=conn)
-llm = HuggingFaceEndpoint(
-repo_id="Qwen/Qwen2.5-7B-Instruct",
-task="text-generation",
-provider="featherless-ai",
-max_new_tokens=1024
-) # type: ignore
-model = ChatHuggingFace(llm=llm)
 
+# llm = HuggingFaceEndpoint(
+# repo_id="Qwen/Qwen2.5-7B-Instruct",
+# task="text-generation",
+# provider="featherless-ai",
+# max_new_tokens=1024
+# ) # type: ignore
+# model = ChatHuggingFace(llm=llm)
+
+model = ChatGroq(
+    model="openai/gpt-oss-120b",
+    temperature=0
+)
 class chatbotState(TypedDict):
     message: Annotated[list[BaseMessage], add_messages]
 

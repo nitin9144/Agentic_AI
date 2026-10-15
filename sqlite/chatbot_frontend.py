@@ -71,6 +71,8 @@ for thread in st.session_state['chat_threads'][::-1]:
 
 # loading the conversation history
 CONFIG = {'configurable': {'thread_id': st.session_state['thread_id']}}
+
+
 for message in st.session_state['message_history']:
     with st.chat_message(message['role']):
         st.text(message['content'])
